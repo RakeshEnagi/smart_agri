@@ -5,7 +5,22 @@ import joblib
 import numpy as np
 from streamlit_folium import st_folium
 import folium
-from utils import fetch_weather_data, get_hourly_forecast, recommend_fertilizer, predict_stress_level
+from utils import fetch_weather_data, get_hourly_forecast, recommend_fertilizer, predict_stress_level, get_7_day_forecast, generate_weather_alerts
+import os
+
+# Load Crop Model
+crop_model_path = os.path.join('model', 'crop_model.pkl')
+if os.path.exists(crop_model_path):
+    crop_model = joblib.load(crop_model_path)
+    crop_model_loaded = True
+else:
+    crop_model_loaded = False
+
+# Load Other Models
+yield_model = joblib.load("model/yield_model.pkl")
+time_model = joblib.load("model/best_window_model.pkl")
+fert_model = joblib.load("model/fertilizer_model.pkl")
+stress_model = joblib.load("model/stress_model.pkl")
 
 st.set_page_config(page_title="Smart Potato Farming", layout="wide")
 
@@ -16,14 +31,9 @@ page = st.sidebar.radio("Choose a Feature", [
     "📈 Yield Prediction",
     "🕒 Best Fertilizer Window",
     "🧪 Fertilizer Recommendation",
-    "⚠️ Crop Stress Level Prediction"
+    "⚠️ Crop Stress Level Prediction",
+    "🌱 Crop Recommendation"
 ])
-
-# Load models
-yield_model = joblib.load("model/yield_model.pkl")
-time_model = joblib.load("model/best_window_model.pkl")
-fert_model = joblib.load("model/fertilizer_model.pkl")
-stress_model = joblib.load("model/stress_model.pkl")
 
 st.subheader("🌍 Select Your Location on Map")
 
@@ -49,6 +59,34 @@ if output and output['last_clicked']:
         st.write(f"**Rainfall:** {rain:.2f} mm")
         st.write(f"**Humidity:** {humidity:.2f}%")
         st.write(f"**Wind Speed:** {wind:.2f} m/s")
+
+        st.subheader("🌦️ Weather Alerts for Next 7 Days")
+        forecast_df = get_7_day_forecast(lat, lon)
+        if not forecast_df.empty:
+            alerts = []
+            total_rain = forecast_df['rain'].sum()
+            if total_rain < 10:
+                alerts.append(f"🌧️ Low rainfall expected (Total: {total_rain:.1f} mm)")
+            if total_rain > 70:
+                alerts.append(f"🌊 High rainfall alert (Total: {total_rain:.1f} mm)")
+            if forecast_df['rain'].std() > 5:
+                alerts.append("🌦️ Uneven rainfall pattern over next 7 days")
+            if forecast_df['temp'].max() > 38:
+                alerts.append(f"🌡️ High temperatures up to {forecast_df['temp'].max():.1f}°C expected")
+            if forecast_df['wind'].max() > 7:
+                alerts.append(f"🌬️ High wind speeds up to {forecast_df['wind'].max():.1f} m/s")
+            fog_days = forecast_df[(forecast_df['humidity'] > 85) & (forecast_df['temp'] < 20)]
+            if len(fog_days) >= 2:
+                alerts.append("🌫️ Foggy conditions likely on multiple days")
+
+            if alerts:
+                for alert in alerts:
+                    st.warning(alert)
+            else:
+                st.success("✅ No major weather threats detected in the next 7 days.")
+            st.dataframe(forecast_df)
+        else:
+            st.warning("Could not fetch 7-day forecast data.")
 
         ozone = st.slider("Input Ground-Level Ozone (ppb)", 30, 100, 60)
         soil = st.slider("Input Soil Moisture (m³/m³)", 0.1, 0.5, 0.25)
@@ -113,12 +151,7 @@ if output and output['last_clicked']:
                 "ph": ph,
                 "stage": stage
             }])
-            input_df = pd.get_dummies(input_df)
-            for col in fert_model.feature_names_in_:
-                if col not in input_df.columns:
-                    input_df[col] = 0
-            input_df = input_df[fert_model.feature_names_in_]
-            prediction = fert_model.predict(input_df)[0]
+            prediction = recommend_fertilizer(input_df, fert_model)
             st.success(f"🌿 Recommended Fertilizer: **{prediction}**")
 
         elif page == "⚠️ Crop Stress Level Prediction":
@@ -131,7 +164,28 @@ if output and output['last_clicked']:
             st.info(f"Stress Level: **{level}**")
             st.write(explanation)
 
-    else:
-        st.error("Failed to fetch weather data. Check coordinates or network.")
+        elif page == "🌱 Crop Recommendation":
+            st.header("🌱 Crop Recommendation")
+            st.write("Enter soil and weather parameters to get the best crop recommendation.")
+            N = st.number_input("Nitrogen (N)", min_value=0, max_value=200, value=50)
+            P = st.number_input("Phosphorus (P)", min_value=0, max_value=200, value=50)
+            K = st.number_input("Potassium (K)", min_value=0, max_value=200, value=50)
+            temperature = st.number_input("Temperature (°C)", min_value=0.0, max_value=60.0, value=25.0)
+            humidity = st.number_input("Humidity (%)", min_value=0.0, max_value=100.0, value=60.0)
+            ph = st.number_input("Soil pH", min_value=3.0, max_value=10.0, value=6.5)
+            rainfall = st.number_input("Rainfall (mm)", min_value=0.0, max_value=500.0, value=100.0)
+            ozone = st.number_input("Ozone (ppb)", min_value=10, max_value=100, value=40)
+            if crop_model_loaded:
+                if st.button("Recommend Crop"):
+                    features = [[N, P, K, temperature, humidity, ph, rainfall, ozone]]
+                    try:
+                        pred = crop_model.predict(features)[0]
+                        st.success(f"Recommended Crop: **{pred}**")
+                    except Exception as e:
+                        st.warning("No preferred crop available for the given conditions.")
+                        st.error(f"Prediction error: {e}")
+            else:
+                st.warning("Crop recommendation model not found. Please place crop_model.pkl in the model folder.")
+    st.markdown("<span style='color:#388e3c'><b>ℹ️ Weather and model outputs will now auto-update and show as popups every minute (web dashboard only).</b></span>", unsafe_allow_html=True)
 else:
     st.info("Click on the map to select a location.")

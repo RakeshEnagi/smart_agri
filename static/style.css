@@ -1,0 +1,77 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f8fb;
+    margin: 0;
+    padding: 0;
+    color: #222;
+}
+header {
+    background: #2e7d32;
+    color: #fff;
+    padding: 2rem 0 1rem 0;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+}
+header p {
+    margin: 0.5rem 0 0 0;
+    font-size: 1.2rem;
+}
+main {
+    max-width: 600px;
+    margin: 2rem auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.08);
+    padding: 2rem;
+}
+.input-section h2 {
+    margin-top: 0;
+}
+label {
+    display: block;
+    margin: 1rem 0 0.2rem 0;
+}
+input[type="number"] {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #bdbdbd;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+button {
+    margin-top: 1rem;
+    padding: 0.7rem 2rem;
+    background: #388e3c;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+button:hover {
+    background: #256029;
+}
+.results-section {
+    margin-top: 2rem;
+    background: #e8f5e9;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.05);
+}
+#weather, #recommendations {
+    margin-bottom: 1rem;
+}
+footer {
+    text-align: center;
+    padding: 1rem 0;
+    background: #e0e0e0;
+    color: #333;
+    margin-top: 2rem;
+    border-top: 1px solid #bdbdbd;
+}

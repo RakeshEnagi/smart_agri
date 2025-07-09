@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMART AGRI Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 350px; width: 100%; margin-bottom: 1.5rem; border-radius: 8px; }
+        .tabs { display: flex; gap: 1rem; margin-top: 2rem; }
+        .tab { padding: 0.7rem 1.5rem; background: #e8f5e9; border-radius: 5px 5px 0 0; cursor: pointer; font-weight: 500; }
+        .tab.active { background: #388e3c; color: #fff; }
+        .tab-content { display: none; background: #fff; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px rgba(46,125,50,0.05); padding: 1.5rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SMART AGRI</h1>
+        <p>Smart Agriculture Decision Support System</p>
+    </header>
+    <main>
+        <section class="input-section">
+            <h2>Get Weather & Recommendations</h2>
+            <div id="map"></div>
+            <form id="agriForm">
+                <label for="lat">Latitude:</label>
+                <input type="number" step="any" id="lat" name="lat" required>
+                <label for="lon">Longitude:</label>
+                <input type="number" step="any" id="lon" name="lon" required>
+                <button type="submit">Get Data</button>
+            </form>
+            <p style="font-size:0.95em;color:#388e3c;">Tip: Click on the map to auto-fill coordinates.</p>
+        </section>
+        <section id="results" class="results-section" style="display:none;">
+            <h2>Results</h2>
+            <div id="weather"></div>
+            <div id="recommendations"></div>
+        </section>
+        <div class="tabs">
+            <div class="tab" data-target="yield-tab">Yield Prediction</div>
+            <div class="tab" data-target="fertilizer-tab">Fertilizer Recommendation</div>
+            <div class="tab" data-target="stress-tab">Stress Prediction</div>
+            <div class="tab" data-target="besttime-tab">Best Time to Spray</div>
+            <div class="tab" data-target="crop-tab">Crop Recommendation</div>
+        </div>
+        <div id="yield-tab" class="tab-content">
+            <h3>Yield Prediction</h3>
+            <label for="ozone">Ozone (ppb):</label>
+            <input type="number" id="ozone" value="60" step="any">
+            <label for="soil">Soil Moisture (m³/m³):</label>
+            <input type="number" id="soil" value="0.25" step="any">
+            <button onclick="getYieldPrediction();return false;">Predict Yield</button>
+            <div id="yield-result" style="margin-top:1rem;"></div>
+        </div>
+        <div id="fertilizer-tab" class="tab-content">
+            <h3>Fertilizer Recommendation</h3>
+            <label for="ph">Soil pH:</label>
+            <input type="number" id="ph" value="5.8" step="any">
+            <label for="stage">Growth Stage:</label>
+            <select id="stage">
+                <option>Pre-Planting</option>
+                <option>Early Growth</option>
+                <option>Tuberization</option>
+                <option>Bulking</option>
+            </select>
+            <button onclick="getFertilizerRecommendation();return false;">Recommend Fertilizer</button>
+            <div id="fertilizer-result" style="margin-top:1rem;"></div>
+        </div>
+        <div id="stress-tab" class="tab-content">
+            <h3>Stress Prediction</h3>
+            <label for="temp">Temperature (°C):</label>
+            <input type="number" id="temp" value="25" step="any">
+            <label for="humidity">Humidity (%):</label>
+            <input type="number" id="humidity" value="60" step="any">
+            <label for="color">Leaf Color:</label>
+            <select id="color">
+                <option>Dark Green</option>
+                <option>Yellowing</option>
+                <option>Purple Tint</option>
+                <option>Brown Spots</option>
+            </select>
+            <label for="symptom">Symptom:</label>
+            <select id="symptom">
+                <option>None</option>
+                <option>Wilting</option>
+                <option>Curling</option>
+                <option>Stunted Growth</option>
+            </select>
+            <button onclick="getStressPrediction();return false;">Predict Stress</button>
+            <div id="stress-result" style="margin-top:1rem;"></div>
+        </div>
+        <div id="besttime-tab" class="tab-content">
+            <h3>Best Time to Spray Fertilizer</h3>
+            <button onclick="getBestTimeToSpray();return false;">Get Best Time Window</button>
+            <div id="besttime-result" style="margin-top:1rem;"></div>
+        </div>
+        <div id="crop-tab" class="tab-content">
+            <h3>Crop Recommendation</h3>
+            <label for="N">Nitrogen (N):</label>
+            <input type="number" id="N" value="50" step="any">
+            <label for="P">Phosphorus (P):</label>
+            <input type="number" id="P" value="50" step="any">
+            <label for="K">Potassium (K):</label>
+            <input type="number" id="K" value="50" step="any">
+            <label for="temperature">Temperature (°C):</label>
+            <input type="number" id="temperature" value="25" step="any">
+            <label for="humidity">Humidity (%):</label>
+            <input type="number" id="humidity" value="60" step="any">
+            <label for="ph">Soil pH:</label>
+            <input type="number" id="ph" value="6.5" step="any">
+            <label for="rainfall">Rainfall (mm):</label>
+            <input type="number" id="rainfall" value="100" step="any">
+            <label for="ozone">Ozone (ppb):</label>
+            <input type="number" id="ozone" value="40" step="any">
+            <button onclick="getCropRecommendation();return false;">Recommend Crop</button>
+            <div id="crop-result" style="margin-top:1rem;"></div>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2025 SMART AGRI</p>
+    </footer>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize map
+        var map = L.map('map').setView([20.5937, 78.9629], 4);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        var marker;
+        map.on('click', function(e) {
+            var lat = e.latlng.lat.toFixed(6);
+            var lon = e.latlng.lng.toFixed(6);
+            document.getElementById('lat').value = lat;
+            document.getElementById('lon').value = lon;
+            if (marker) { map.removeLayer(marker); }
+            marker = L.marker([lat, lon]).addTo(map);
+        });
+    </script>
+    <script src="/static/app.js"></script>
+    <script src="/static/dashboard.js"></script>
+    <script src="/static/auto_update.js"></script>
+</body>
+</html>

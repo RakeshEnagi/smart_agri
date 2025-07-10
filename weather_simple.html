@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather & Spray Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body { background: #f4f8fb; color: #222; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .container { max-width: 500px; margin: 2rem auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(44, 62, 80, 0.08); padding: 2rem; }
+        h1 { text-align: center; color: #2e7d32; }
+        label { display: block; margin: 1rem 0 0.2rem 0; }
+        input[type="number"] { width: 100%; padding: 0.5rem; border: 1px solid #bdbdbd; border-radius: 5px; font-size: 1rem; }
+        button { margin-top: 1rem; padding: 0.7rem 2rem; background: #388e3c; color: #fff; border: none; border-radius: 5px; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #256029; }
+        .result, .alert, .window { margin-top: 1.5rem; padding: 1em; border-radius: 6px; }
+        .result { background: #e3f2fd; color: #1565c0; }
+        .alert { background: #ffeb3b; color: #222; }
+        .window { background: #e8f5e9; color: #256029; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Weather & Spraying Dashboard</h1>
+        <form id="weatherForm">
+            <label for="lat">Latitude:</label>
+            <input type="number" step="any" id="lat" name="lat" required>
+            <label for="lon">Longitude:</label>
+            <input type="number" step="any" id="lon" name="lon" required>
+            <button type="submit">Get Weather</button>
+        </form>
+        <div id="weatherResult"></div>
+        <div id="alerts"></div>
+        <div id="sprayWindow"></div>
+    </div>
+    <script>
+    document.getElementById('weatherForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const lat = document.getElementById('lat').value;
+        const lon = document.getElementById('lon').value;
+        document.getElementById('weatherResult').innerHTML = '';
+        document.getElementById('alerts').innerHTML = '';
+        document.getElementById('sprayWindow').innerHTML = '';
+        // Weather
+        const wres = await fetch(`/weather?lat=${lat}&lon=${lon}`);
+        const wdata = await wres.json();
+        if (wdata.weather) {
+            document.getElementById('weatherResult').innerHTML = `<div class='result'><b>Weather:</b><br>Temp: ${wdata.weather.temp}°C, Humidity: ${wdata.weather.humidity}%, Rain: ${wdata.weather.rain}mm, Wind: ${wdata.weather.wind}km/h</div>`;
+        }
+        // Alerts
+        const ares = await fetch(`/weather_alerts?lat=${lat}&lon=${lon}`);
+        const adata = await ares.json();
+        if (adata.alerts && adata.alerts.length > 0) {
+            document.getElementById('alerts').innerHTML = adata.alerts.map(a => `<div class='alert'>${a}</div>`).join('');
+        }
+        // Spray Window
+        const sres = await fetch(`/spray_window?lat=${lat}&lon=${lon}`);
+        const sdata = await sres.json();
+        if (sdata.result) {
+            document.getElementById('sprayWindow').innerHTML = `<div class='window'>${sdata.result}</div>`;
+        }
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather & Spray Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .alert { background: #ffeb3b; color: #222; padding: 1em; border-radius: 6px; margin-bottom: 1em; }
+        .window { background: #e3f2fd; color: #1565c0; padding: 1em; border-radius: 6px; margin-bottom: 1em; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Weather & Spraying Dashboard</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Get Weather & Alerts</h2>
+            <form id="weatherForm">
+                <label for="lat">Latitude:</label>
+                <input type="number" step="any" id="lat" name="lat" required>
+                <label for="lon">Longitude:</label>
+                <input type="number" step="any" id="lon" name="lon" required>
+                <button type="submit">Get Weather</button>
+            </form>
+            <div id="weatherResult"></div>
+            <div id="alerts"></div>
+            <div id="sprayWindow"></div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 SMART AGRI</p>
+    </footer>
+    <script>
+    document.getElementById('weatherForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const lat = document.getElementById('lat').value;
+        const lon = document.getElementById('lon').value;
+        document.getElementById('weatherResult').innerHTML = '';
+        document.getElementById('alerts').innerHTML = '';
+        document.getElementById('sprayWindow').innerHTML = '';
+        // Weather
+        const wres = await fetch(`/weather?lat=${lat}&lon=${lon}`);
+        const wdata = await wres.json();
+        if (wdata.weather) {
+            document.getElementById('weatherResult').innerHTML = `<div class='window'><b>Weather:</b><br>Temp: ${wdata.weather.temp}°C, Humidity: ${wdata.weather.humidity}%, Rain: ${wdata.weather.rain}mm, Wind: ${wdata.weather.wind}km/h</div>`;
+        }
+        // Alerts
+        const ares = await fetch(`/weather_alerts?lat=${lat}&lon=${lon}`);
+        const adata = await ares.json();
+        if (adata.alerts && adata.alerts.length > 0) {
+            document.getElementById('alerts').innerHTML = adata.alerts.map(a => `<div class='alert'>${a}</div>`).join('');
+        }
+        // Spray Window
+        const sres = await fetch(`/spray_window?lat=${lat}&lon=${lon}`);
+        const sdata = await sres.json();
+        if (sdata.result) {
+            document.getElementById('sprayWindow').innerHTML = `<div class='window'>${sdata.result}</div>`;
+        }
+    });
+    </script>
+</body>
+</html>

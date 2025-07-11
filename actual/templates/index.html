@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Agriculture - Disease Risk Forecast</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌾 Smart Agriculture</h1>
+            <h2>Potato Disease Risk Forecast</h2>
+        </header>
+
+        <div class="main-content">
+            <div class="add-field-section">
+                <h3>Add New Farming Field</h3>
+                <div class="input-group">
+                    <input type="text" id="fieldName" placeholder="Enter Field Name">
+                    <button onclick="saveField()" class="btn primary">Save Field</button>
+                </div>
+                <div id="map"></div>
+            </div>
+
+            <div class="view-fields-section">
+                <h3>View Saved Fields</h3>
+                <select id="fieldSelect" onchange="showFieldOnMap()">
+                    <option value="">Select a field...</option>
+                </select>
+                <button onclick="getForecast()" class="btn secondary">Show Risk Forecast</button>
+
+                <div id="forecast-results" class="forecast-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
